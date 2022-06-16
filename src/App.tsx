@@ -162,9 +162,39 @@ function App() {
       debouncedRun(input, filter, setOut)
   }, [input, filter])
 
+
+  function setFileInput(data: string) {
+    const input = []
+    for (const line of data.split('\n')) {
+      input.push(JSON.stringify({log: line}))
+    }
+    setInput(input.join('\n'))
+  }
+
   return (
     <div>
       <h2>Input json (one JSON expression per line)</h2>
+        <input type="file" onChange={(e) => {
+
+          if (!e.target.files || !e.target.files[0]) {
+            console.error('failed to read file', e)
+            return
+          }
+
+          const file = e.target.files[0]
+          const fileReader = new FileReader()
+
+          fileReader.onloadend = (e) => {
+            const { result } = fileReader
+            if (typeof result != "string") {
+              console.error('failed to read file', e)
+              return
+            }
+            setFileInput(result)
+          }
+
+          fileReader.readAsText(file)
+        }} />
       <CodeMirror
         value={input}
         height="200px"
