@@ -73,12 +73,34 @@ end
 const initialInput = `{"log": "line 1"}
 {"log": "line 2"}
 {"log": "line 3"}
-`
+{"log": "line 4"}
+{"log": "line 5"}
+{"log": "line 6"}
+{"log": "line 7"}
+{"log": "line 8"}
+{"log": "line 9"}
+{"log": "line 10"}
+{"log": "line 11"}
+{"log": "line 12"}
+{"log": "line 13"}
+{"log": "line 14"}
+{"log": "line 15"}`
+
 const initialFilter = `function cb_filter(tag, ts, record)
-  record.message = 'hello from lua'
+  local number_start, number_end = record.log:find('%d+')
+  local number_string = record.log:sub(number_start, number_end)
+  local num = tonumber(number_string)
+
+  if num % 15 == 0 then
+    record.log = 'FizzBuzz'
+  elseif num % 5 == 0 then
+    record.log = 'Buzz'
+  elseif num % 3 == 0 then
+    record.log = 'Fizz'
+  end        
+  
   return 1, ts, record
-end
-`
+end`
 
 function run(input: string, filter: string, setOut: Function) {
   const jsonExpressions = input.split('\n')
@@ -162,9 +184,39 @@ function App() {
       debouncedRun(input, filter, setOut)
   }, [input, filter])
 
+
+  function setFileInput(data: string) {
+    const input = []
+    for (const line of data.split('\n')) {
+      input.push(JSON.stringify({log: line}))
+    }
+    setInput(input.join('\n'))
+  }
+
   return (
     <div>
       <h2>Input json (one JSON expression per line)</h2>
+        <input type="file" onChange={(e) => {
+
+          if (!e.target.files || !e.target.files[0]) {
+            console.error('failed to read file', e)
+            return
+          }
+
+          const file = e.target.files[0]
+          const fileReader = new FileReader()
+
+          fileReader.onloadend = (e) => {
+            const { result } = fileReader
+            if (typeof result != "string") {
+              console.error('failed to read file', e)
+              return
+            }
+            setFileInput(result)
+          }
+
+          fileReader.readAsText(file)
+        }} />
       <CodeMirror
         value={input}
         height="200px"
