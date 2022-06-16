@@ -73,12 +73,34 @@ end
 const initialInput = `{"log": "line 1"}
 {"log": "line 2"}
 {"log": "line 3"}
-`
+{"log": "line 4"}
+{"log": "line 5"}
+{"log": "line 6"}
+{"log": "line 7"}
+{"log": "line 8"}
+{"log": "line 9"}
+{"log": "line 10"}
+{"log": "line 11"}
+{"log": "line 12"}
+{"log": "line 13"}
+{"log": "line 14"}
+{"log": "line 15"}`
+
 const initialFilter = `function cb_filter(tag, ts, record)
-  record.message = 'hello from lua'
+  local number_start, number_end = record.log:find('%d+')
+  local number_string = record.log:sub(number_start, number_end)
+  local num = tonumber(number_string)
+
+  if num % 15 == 0 then
+    record.log = 'FizzBuzz'
+  elseif num % 5 == 0 then
+    record.log = 'Buzz'
+  elseif num % 3 == 0 then
+    record.log = 'Fizz'
+  end        
+  
   return 1, ts, record
-end
-`
+end`
 
 function run(input: string, filter: string, setOut: Function) {
   const jsonExpressions = input.split('\n')
