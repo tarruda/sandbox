@@ -7,7 +7,12 @@ import { json } from '@codemirror/lang-json';
 import { lua } from '@codemirror/legacy-modes/mode/lua';
 import _ from 'underscore'
 
-import { runFilter } from './fengari_runner'
+import { runFilter as runFilterFengari } from './fengari_runner'
+import { runFilter as runFilterCloud } from './cloud_runner'
+
+const runFilter = process.env.REACT_APP_CLOUD_RUNNER_URL || localStorage.getItem('enable-cloud-runner') ?
+  runFilterCloud :
+  runFilterFengari
 
 const storageKey = "flb-input-filter"
 
@@ -65,9 +70,16 @@ async function run(input: string, filter: string, setOut: Function) {
     }
   }
 
-  fetching = true
-  const result = await runFilter(events, filter)
-  fetching = false
+  let result: any[]
+  try {
+    fetching = true
+    result = await runFilter(events, filter)
+  } catch (err) {
+    console.error(err)
+    return
+  } finally {
+    fetching = false
+  }
 
   if (events.length !== result.length) {
     console.error('Result array has different length than events array', result, events)
